@@ -20,6 +20,8 @@ public:
     void handleSib(common::BtsId btsId) override;
     void handleAttachAccept() override;
     void handleAttachReject() override;
+    virtual void handleDisconnectedFromBts();
+
 
 protected:
     Context& context;
