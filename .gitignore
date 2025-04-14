@@ -11,6 +11,10 @@ CTestTestfile.cmake
 _deps
 build
 
+
 *.a
 *.o
 *_autogen
+
+.idea/*
+cmake-build-*/
