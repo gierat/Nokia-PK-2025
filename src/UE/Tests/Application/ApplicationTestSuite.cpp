@@ -25,6 +25,7 @@ protected:
 
     Expectation showNotConnected = EXPECT_CALL(userPortMock, showNotConnected());
 
+
     Application objectUnderTest{PHONE_NUMBER,
                                 loggerMock,
                                 btsPortMock,
@@ -54,9 +55,23 @@ TEST_F(ApplicationNotConnectedTestSuite, shallSendAttachRequestOnSib)
 
 };
 
-    TEST_F(ApplicationConnectingTestSuite, shallConnectOnAttachAccept) {
-        EXPECT_CALL(timerPortMock, stopTimer());
-        EXPECT_CALL(userPortMock, showConnected());
-        objectUnderTest.handleAttachAccept();
-    }
+TEST_F(ApplicationConnectingTestSuite, shallConnectOnAttachAccept) {
+    EXPECT_CALL(timerPortMock, stopTimer());
+    EXPECT_CALL(userPortMock, showConnected());
+    objectUnderTest.handleAttachAccept();
+}
+
+TEST_F(ApplicationConnectingTestSuite, shallReturnToNotConnectedOnAttachReject)
+{
+    EXPECT_CALL(timerPortMock, stopTimer());
+    EXPECT_CALL(userPortMock, showNotConnected());
+    objectUnderTest.handleAttachReject();
+}
+
+TEST_F(ApplicationConnectingTestSuite, shallReturnToNotConnectedOnTimeout)
+{
+    EXPECT_CALL(userPortMock, showNotConnected());
+    objectUnderTest.handleTimeout();
+}
+
 };
