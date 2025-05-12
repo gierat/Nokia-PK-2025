@@ -4,6 +4,10 @@
 #include "Messages/PhoneNumber.hpp"
 #include "IEventsHandler.hpp"
 #include "Context.hpp"
+#include "Ports/IBtsPort.hpp"
+#include "Ports/IUserPort.hpp"
+#include "Ports/ITimerPort.hpp"
+#include "SmsRepository.hpp"
 
 namespace ue
 {
@@ -21,6 +25,8 @@ public:
                 ITimerPort& timer);
     ~Application();
 
+    void handleUiAction(std::optional<std::size_t> selectedIndex) override;
+    void handleUiBack() override;
     // ITimerEventsHandler interface
     void handleTimeout() override;
 
@@ -29,6 +35,8 @@ public:
     void handleAttachAccept() override;
     void handleAttachReject() override;
     void handleDisconnectedFromBts() override;
+    void handleSmsReceived(common::PhoneNumber from, std::string text) override;
+
 
 private:
     Context context;

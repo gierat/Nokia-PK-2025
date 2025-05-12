@@ -15,6 +15,6 @@ NotConnectedState::NotConnectedState(Context &context)
         using namespace std::chrono_literals;
         context.timer.startTimer(500ms);
         context.bts.sendAttachRequest(btsId);
-        context.setState<ConnectingState>();
+        context.setState<ConnectingState>(btsId);
     }
 }

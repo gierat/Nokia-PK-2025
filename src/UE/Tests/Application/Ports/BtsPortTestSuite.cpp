@@ -22,8 +22,12 @@ protected:
     StrictMock<IBtsEventsHandlerMock> handlerMock;
     StrictMock<common::ITransportMock> transportMock;
     common::ITransport::MessageCallback messageCallback;
+    common::ITransport::DisconnectedCallback disconnectedCallback;
+    common::BinaryMessage msg;
 
     BtsPort objectUnderTest{loggerMock, transportMock, PHONE_NUMBER};
+
+
 
     BtsPortTestSuite()
     {
