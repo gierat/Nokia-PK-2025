@@ -6,6 +6,8 @@
 #include "Ports/IUserPort.hpp"
 #include "Ports/ITimerPort.hpp"
 #include "SmsRepository.hpp"
+#include "Messages/PhoneNumber.hpp"
+
 
 
 #include <memory>
@@ -21,6 +23,9 @@ struct Context
     ITimerPort& timer;
     std::unique_ptr<IEventsHandler> state{};
     SmsRepository smsRepository;
+    common::PhoneNumber myPhoneNumber;
+
+
 
     template <typename State, typename ...Arg>
     void setState(Arg&& ...arg)

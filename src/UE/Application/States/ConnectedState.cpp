@@ -3,51 +3,79 @@
 #include "ViewingSmsListState.hpp"
 #include <vector>
 
-namespace ue {
+#include "ComposingSmsState.hpp"
+
+namespace ue
+{
     ConnectedState::ConnectedState(Context &context)
-        : BaseState(context, "ConnectedState") {
-        context.user.showConnected();
+        : BaseState(context, "ConnectedState")
+    {
+        showMainMenu();
     }
 
-    void ConnectedState::showMainMenu() {
+    void ConnectedState::showMainMenu()
+    {
         logger.logInfo("Entering Main Menu");
         context.user.showConnected();
     }
 
+    void ConnectedState::handleDisconnected()
+    {
+        logger.logInfo("Connection to BTS lost");
+        context.setState<NotConnectedState>();
+    }
 
-    void ConnectedState::handleSmsReceived(common::PhoneNumber from, std::string text) {
+    void ConnectedState::handleSmsReceived(common::PhoneNumber from, std::string text)
+    {
         logger.logInfo("SMS received from: ", from);
-        std::size_t smsIndex = context.smsRepository.addSms(from, text);
+        std::size_t smsIndex = context.smsRepository.addReceivedSms(from, text);
         logger.logDebug("SMS stored at index: ", smsIndex);
         context.user.showNewSms();
     }
 
-    void ConnectedState::handleUiAction(std::optional<std::size_t> selectedIndex) {
+
+    void ConnectedState::handleUiAction(std::optional<std::size_t> selectedIndex)
+    {
         if (!selectedIndex.has_value()) {
             logger.logInfo("UI Action received with no index in Main Menu");
             return;
         }
 
-        std::size_t index = selectedIndex.value();
-        logger.logInfo("Main menu action selected: index ", index);
+        logger.logInfo("Main menu selection: index=", selectedIndex.value());
 
+        switch (selectedIndex.value())
+        {
+        case 0:
+            logger.logInfo("Compose SMS selected");
+            context.setState<ComposingSmsState>();
+            break;
 
-        if (index == 0) {
-            logger.logInfo("Compose SMS action selected - (Not Implemented Yet)");
-        } else if (index == 1) {
-            logger.logInfo("View SMS action selected");
+        case 1:
+            logger.logInfo("View SMS selected");
             context.setState<ViewingSmsListState>();
-        } else {
-            logger.logInfo("Unknown main menu index selected: ", index);
+            break;
+
+        default:
+            logger.logError("Invalid menu option selected: ", selectedIndex.value());
+            break;
         }
     }
 
-    void ConnectedState::handleUiBack() {
-        logger.logInfo("Back action in main menu - ignored");
+    void ConnectedState::handleUiBack()
+    {
+         logger.logInfo("Back action in main menu - ignored");
     }
 
-    void ConnectedState::handleDisconnectedFromBts() {
-        context.user.showNotConnected();
-        context.setState<NotConnectedState>();
+    void ConnectedState::handleSmsSentResult(common::PhoneNumber to, bool success)
+    {
+        logger.logInfo("Received SMS send result for ", to, " while in main menu. Success: ", success);
+        if (!success) {
+            if (!context.smsRepository.markLastOutgoingSmsAsFailed()) {
+                logger.logInfo("Could not mark last outgoing SMS as failed.");
+            }
+            context.user.showAlert("SMS Failed", "Could not send SMS to " + common::to_string(to));
+        }
     }
+
+
 }

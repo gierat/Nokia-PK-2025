@@ -12,36 +12,35 @@
 namespace ue
 {
 
-using common::PhoneNumber;
-using common::ILogger;
+    using common::ILogger;
+    using common::PhoneNumber;
 
-class Application : public IEventsHandler
-{
-public:
-    Application(PhoneNumber phoneNumber,
-                ILogger& iLogger,
-                IBtsPort& bts,
-                IUserPort& user,
-                ITimerPort& timer);
-    ~Application();
+    class Application : public IEventsHandler
+    {
+    public:
+        Application(PhoneNumber phoneNumber,
+                    ILogger &iLogger,
+                    IBtsPort &bts,
+                    IUserPort &user,
+                    ITimerPort &timer);
+        ~Application();
 
-    void handleUiAction(std::optional<std::size_t> selectedIndex) override;
-    void handleUiBack() override;
-    // ITimerEventsHandler interface
-    void handleTimeout() override;
-
-    // IBtsEventsHandler interface
-    void handleSib(common::BtsId btsId) override;
-    void handleAttachAccept() override;
-    void handleAttachReject() override;
-    void handleDisconnectedFromBts() override;
-    void handleSmsReceived(common::PhoneNumber from, std::string text) override;
+        void handleUiAction(std::optional<std::size_t> selectedIndex) override;
+        void handleUiBack() override;
+        void handleTimeout() override;
 
 
-private:
-    Context context;
-    common::PrefixedLogger logger;
+        void handleSib(common::BtsId btsId) override;
+        void handleAttachAccept() override;
+        void handleAttachReject() override;
+        void handleDisconnected();
+        void handleSmsReceived(common::PhoneNumber from, std::string text) override;
+        void handleSmsSentResult(common::PhoneNumber to, bool success) override;
+        void handleSmsComposeResult(common::PhoneNumber recipient, const std::string& text) override;
 
-};
+    private:
+        Context context;
+        common::PrefixedLogger logger;
+    };
 
 }
