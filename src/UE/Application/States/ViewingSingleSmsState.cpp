@@ -19,9 +19,10 @@ namespace ue
         }
 
         const SmsMessage &message = allSms[viewingSmsIndex];
-        logger.logInfo("Viewing SMS at index: ", viewingSmsIndex, ", From: ", message.from);
+        logger.logInfo("Viewing SMS at index: ", viewingSmsIndex, ", From: "); //from message.peer
 
-        if (!message.isRead)
+        if (message.direction == SmsMessage::Direction::INCOMING &&
+            message.status == SmsMessage::Status::RECEIVED_UNREAD)
         {
             logger.logDebug("Marking SMS as read: index ", viewingSmsIndex);
             context.smsRepository.markAsRead(viewingSmsIndex);
@@ -32,11 +33,27 @@ namespace ue
 
     void ViewingSingleSmsState::handleUiBack()
     {
-        logger.logInfo("Back action from single SMS view.");
+        const auto &allSms = context.smsRepository.getAllSms();
+        context.user.showSmsList(allSms);
+
         context.setState<ViewingSmsListState>();
     }
 
-    void ViewingSingleSmsState::handleDisconnectedFromBts()
+    void ViewingSingleSmsState::handleUiAction(std::optional<std::size_t> selectedIndex)
+    {
+        if (!selectedIndex.has_value())
+        {
+            logger.logInfo("Action without index in single SMS view - switching to compose");
+            return;
+        }
+
+        logger.logInfo("UI action in single SMS view - returning to list");
+        const auto &allSms = context.smsRepository.getAllSms();
+        context.user.showSmsList(allSms);
+        context.setState<ViewingSmsListState>();
+    }
+
+    void ViewingSingleSmsState::handleDisconnected()
     {
         logger.logInfo("Connection lost while viewing single SMS.");
         context.setState<NotConnectedState>();
@@ -45,7 +62,7 @@ namespace ue
     void ViewingSingleSmsState::handleSmsReceived(common::PhoneNumber from, std::string text)
     {
         logger.logInfo("SMS received while viewing another SMS (from: ", from, ")");
-        std::size_t smsIndex = context.smsRepository.addSms(from, text);
+        std::size_t smsIndex = context.smsRepository.addReceivedSms(from, text);
         logger.logDebug("SMS stored at index: ", smsIndex);
         context.user.showNewSms();
     }

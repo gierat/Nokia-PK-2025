@@ -12,7 +12,7 @@ public:
     void handleAttachAccept() override;
     void handleAttachReject() override;
     void handleTimeout() override;
-    void handleDisconnectedFromBts() override;
+    void handleDisconnected() override;
 
 private:
     common::BtsId btsId;

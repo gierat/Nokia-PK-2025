@@ -3,53 +3,90 @@
 #include "States/ConnectedState.hpp"
 
 
-namespace ue {
+
+namespace ue
+{
+
     Application::Application(common::PhoneNumber phoneNumber,
                              common::ILogger &iLogger,
                              IBtsPort &bts,
                              IUserPort &user,
                              ITimerPort &timer)
-        : context{iLogger, bts, user, timer},
-          logger(iLogger, "[APP] ") {
-        logger.logInfo("Started");
+        : context{iLogger, bts, user, timer, SmsRepository(), nullptr, phoneNumber},
+          logger(iLogger, "[APP] ")
+    {
+        logger.logInfo("Started with phone number: ", context.myPhoneNumber);
         context.setState<NotConnectedState>();
     }
 
-    Application::~Application() {
+    Application::~Application()
+    {
         logger.logInfo("Stopped");
     }
 
-    void Application::handleTimeout() {
-        context.state->handleTimeout();
+    void Application::handleUiAction(std::optional<std::size_t> selectedIndex)
+    {
+        if (context.state)
+            context.state->handleUiAction(selectedIndex);
     }
 
-    void Application::handleSib(common::BtsId btsId) {
-        context.state->handleSib(btsId);
+    void Application::handleUiBack()
+    {
+        if (context.state)
+            context.state->handleUiBack();
     }
 
-    void Application::handleAttachAccept() {
-        context.state->handleAttachAccept();
+    void Application::handleTimeout()
+    {
+        if (context.state)
+            context.state->handleTimeout();
     }
 
-    void Application::handleAttachReject() {
-        context.state->handleAttachReject();
+    void Application::handleSib(common::BtsId btsId)
+    {
+        if (context.state)
+            context.state->handleSib(btsId);
     }
 
-    void Application::handleDisconnectedFromBts() {
-        context.state->handleDisconnectedFromBts();
+    void Application::handleAttachAccept()
+    {
+        if (context.state)
+            context.state->handleAttachAccept();
     }
 
-    void Application::handleUiAction(std::optional<std::size_t> selectedIndex) {
-        context.state->handleUiAction(selectedIndex);
+    void Application::handleAttachReject()
+    {
+        if (context.state)
+            context.state->handleAttachReject();
     }
 
-    void Application::handleUiBack() {
-        context.state->handleUiBack();
+    void Application::handleDisconnected()
+    {
+        logger.logInfo("Transport disconnected");
+        if (context.state)
+            context.state->handleDisconnected();
     }
 
     void Application::handleSmsReceived(common::PhoneNumber from, std::string text)
     {
         logger.logInfo("SMS received from: ", from);
-        context.state->handleSmsReceived(from, text);
+        if (context.state)
+            context.state->handleSmsReceived(from, text);
     }
+
+    void Application::handleSmsSentResult(common::PhoneNumber to, bool success)
+    {
+        logger.logInfo("Handling SMS send result for: ", to, ", Success: ", success);
+        if (context.state)
+            context.state->handleSmsSentResult(to, success);
+    }
+
+    void Application::handleSmsComposeResult(common::PhoneNumber recipient, const std::string &text)
+    {
+        context.smsRepository.addSentSms(recipient, text);
+        context.bts.sendSms(recipient, text);
+
+        context.setState<ConnectedState>();
+    }
+
 }
