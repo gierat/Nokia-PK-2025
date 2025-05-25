@@ -18,6 +18,7 @@ namespace ue
         void handleTimeout() override;
         void handleDisconnected() override;
         void handleCallDropped(common::PhoneNumber peer) override;
+        void handleCallReject(common::PhoneNumber peer) override;
 
     private:
         common::PhoneNumber callingPhoneNumber;
