@@ -66,9 +66,8 @@ namespace ue
     void ViewingSmsListState::handleUiBack()
     {
         logger.logInfo("Back action from SMS List view.");
-
         logger.logDebug("Explicitly refreshing SMS list before exiting");
-
+        context.setState<ConnectedState>();
     }
 
     void ViewingSmsListState::handleDisconnected()

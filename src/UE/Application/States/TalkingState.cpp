@@ -100,5 +100,12 @@ namespace ue
         }
     }
 
+    void TalkingState::handleSmsReceived(common::PhoneNumber from, std::string text)
+    {
+        logger.logInfo("SMS received during call from: ", from);
+        context.smsRepository.addReceivedSms(from, text);
+        context.user.showNewSms();
+    }
+
 
 }
