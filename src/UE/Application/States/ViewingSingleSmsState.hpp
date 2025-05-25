@@ -16,6 +16,7 @@ namespace ue
 
         void handleDisconnected() override;
         void handleSmsReceived(common::PhoneNumber from, std::string text) override;
+        void handleCallRequest(common::PhoneNumber from) override;
 
     private:
         std::size_t viewingSmsIndex;

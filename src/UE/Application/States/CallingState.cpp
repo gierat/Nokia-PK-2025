@@ -2,6 +2,7 @@
 #include "TalkingState.hpp"
 #include "ConnectedState.hpp"
 #include "NotConnectedState.hpp"
+#include "IncomingCallState.hpp"
 #include <chrono>
 
 using namespace std::chrono;
@@ -10,7 +11,7 @@ namespace ue
 {
 
     CallingState::CallingState(Context &context)
-        : BaseState(context, "CallingState")
+        : BaseState(context, "CallingState"), awaitingUserAfterFailure(false)
     {
         logger.logInfo("CallingState...");
         context.timer.startTimer(60s);
@@ -18,24 +19,35 @@ namespace ue
 
     void CallingState::handleUiAction(std::optional<std::size_t>)
     {
-        common::PhoneNumber recipent = context.user.getSmsRecipient();
-
-        logger.logInfo("Dialing started, calling number ", recipent);
-
-        if (!recipent.isValid())
+        if (awaitingUserAfterFailure)
         {
-            logger.logError("Wrong phone number.");
-            context.user.showAlert("Invalid number", "Please enter a valid number.");
+            logger.logInfo("User acknowledged call failure alert");
+            context.setState<ConnectedState>();
             return;
         }
 
-        context.bts.sendCallRequest(recipent);
+        common::PhoneNumber recipient = context.user.getDialedPhoneNumber();
+        logger.logInfo("Dialed raw number: ", common::to_string(recipient));
+
+        if (!recipient.isValid())
+        {
+            logger.logError("Wrong phone number.");
+            context.user.showAlert("Invalid number", "Please enter a valid number.");
+            awaitingUserAfterFailure = true;
+            return;
+        }
+
+        dialedNumber = recipient;
+
+        logger.logInfo("Dialing started, calling number ", dialedNumber);
+        context.user.showAlert("Calling...", "Calling number: " + common::to_string(dialedNumber));
+        context.bts.sendCallRequest(dialedNumber);
     }
 
     void CallingState::handleUiBack()
     {
         logger.logInfo("The call was cancelled.");
-        context.bts.sendCallDropped(dialedNumber);
+        context.bts.sendCallReject(dialedNumber);
         context.setState<ConnectedState>();
     }
 
@@ -49,14 +61,14 @@ namespace ue
     {
         logger.logInfo("Call timed out");
         context.user.showAlert("Call Timeout", "Recipient did not answer.");
-        context.setState<ConnectedState>();
+        awaitingUserAfterFailure = true;
     }
 
     void CallingState::handleUnknownRecipient(common::PhoneNumber peer)
     {
         logger.logInfo("Call failed - Unknown recipient: ", peer);
         context.user.showAlert("Call Failed", "Number does not exist.");
-        context.setState<ConnectedState>();
+        awaitingUserAfterFailure = true;
     }
 
     void CallingState::handleCallReject(common::PhoneNumber peer)
@@ -71,4 +83,23 @@ namespace ue
         context.setState<NotConnectedState>();
     }
 
+    void CallingState::handleSmsReceived(common::PhoneNumber from, std::string text)
+    {
+        logger.logInfo("SMS received from: ", from, " while calling");
+        std::size_t smsIndex = context.smsRepository.addReceivedSms(from, text);
+        logger.logDebug("SMS stored at index: ", smsIndex);
+        context.user.showNewSms();
+    }
+
+    void CallingState::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logInfo("Incoming call received from: ", from, " – cancelling outgoing call");
+
+        if (dialedNumber.isValid())
+        {
+            context.bts.sendCallDropped(dialedNumber);
+        }
+
+        context.setState<IncomingCallState>(from);
+    }
 }

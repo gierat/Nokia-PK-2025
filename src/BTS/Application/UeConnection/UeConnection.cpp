@@ -78,7 +78,6 @@ void UeConnection::attach(PhoneNumber phoneNumber)
 
 void UeConnection::detach()
 {
-    // that is probably last operation on this object!
     ueSlot.remove();
 }
 

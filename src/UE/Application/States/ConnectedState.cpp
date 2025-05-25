@@ -59,7 +59,11 @@ namespace ue
             logger.logInfo("View SMS selected");
             context.setState<ViewingSmsListState>();
             break;
-
+        case 2:
+             logger.logInfo("Call selected");
+             context.user.showDialMode();
+             context.setState<CallingState>();
+             break;
         default:
             logger.logError("Invalid menu option selected: ", selectedIndex.value());
             break;

@@ -17,9 +17,12 @@ namespace ue
         void handleTimeout() override;
         void handleUnknownRecipient(common::PhoneNumber peer) override;
         void handleCallReject(common::PhoneNumber peer) override;
+        void handleSmsReceived(common::PhoneNumber from, std::string text) override;
+        void handleCallRequest(common::PhoneNumber from) override;
 
     private:
         common::PhoneNumber dialedNumber;
+        bool awaitingUserAfterFailure = false;
     };
 
 }

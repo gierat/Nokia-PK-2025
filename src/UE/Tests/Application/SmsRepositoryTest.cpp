@@ -42,7 +42,7 @@ namespace ue
     TEST_F(SmsRepositoryTest, shouldMarkSmsAsRead)
     {
         smsRepository.addReceivedSms(testSender, testMessage1);
-        ASSERT_EQ(SmsMessage::Status::RECEIVED_UNREAD, smsmsRepositorysDb.getAllSms()[0].status);
+        ASSERT_EQ(SmsMessage::Status::RECEIVED_UNREAD, smsRepository.getAllSms()[0].status);
 
         bool result = smsRepository.markAsRead(0);
         ASSERT_TRUE(result);

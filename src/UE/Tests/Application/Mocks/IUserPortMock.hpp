@@ -40,7 +40,7 @@ namespace ue
         MOCK_METHOD(void, appendIncomingText, (const std::string &text), (override));
         MOCK_METHOD(void, clearOutgoingText, (), (override));
         MOCK_METHOD(std::string, getCallText, (), (const, override));
-
+        MOCK_CONST_METHOD0(getDialedPhoneNumber, common::PhoneNumber());
     };
 
 }

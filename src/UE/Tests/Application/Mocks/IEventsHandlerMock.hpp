@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Application/IEventsHandler.hpp"
+#include "IEventsHandler.hpp"
 #include <gmock/gmock.h>
 #include <optional>
 

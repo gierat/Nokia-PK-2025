@@ -40,7 +40,9 @@ namespace ue
     void IncomingCallState::handleTimeout()
     {
         logger.logError("Incoming call timeout for: ", callingPhoneNumber, ". Rejecting.");
-        handleUiBack();
+        context.timer.stopTimer();
+        context.bts.sendCallDropped(callingPhoneNumber);
+        context.setState<ConnectedState>();
     }
 
     void IncomingCallState::handleDisconnected()
@@ -65,5 +67,32 @@ namespace ue
         }
     }
 
+    void IncomingCallState::handleCallReject(common::PhoneNumber peer)
+    {
+        if (peer == callingPhoneNumber)
+        {
+            logger.logInfo("Caller cancelled the call before it was answered: ", peer);
+            context.timer.stopTimer();
+            context.user.showAlert("Call Cancelled", "Caller hung up before you answered.");
+            context.setState<ConnectedState>();
+        }
+        else
+        {
+            logger.logError("Received CallReject from unexpected peer ", peer, " while expecting call from ", callingPhoneNumber);
+        }
+    }
+
+    void IncomingCallState::handleSmsReceived(common::PhoneNumber from, std::string text)
+    {
+        logger.logInfo("SMS received during incoming call from: ", from);
+        context.smsRepository.addReceivedSms(from, text);
+        context.user.showNewSms();
+    }
+
+    void IncomingCallState::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logInfo("Received another CallRequest from ", from);
+        context.bts.sendCallDropped(from);
+    }
 
 }

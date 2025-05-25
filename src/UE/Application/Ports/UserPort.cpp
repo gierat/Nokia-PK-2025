@@ -140,7 +140,7 @@ namespace ue
     {
         currentViewMode = details::VIEW_MODE_UNKNOWN;
         logger.logInfo("Showing incoming call screen from: ", from);
-        auto& callMode = gui.setCallMode();
+        auto &callMode = gui.setCallMode();
         callMode.appendIncomingText("Incoming call from: " + common::to_string(from));
     }
 
@@ -148,7 +148,7 @@ namespace ue
     {
         currentViewMode = details::VIEW_MODE_UNKNOWN;
         logger.logInfo("Showing talking screen with: ", peer);
-        auto& callMode = gui.setCallMode();
+        auto &callMode = gui.setCallMode();
         callMode.appendIncomingText("Connected with: " + common::to_string(peer));
     }
 
@@ -202,6 +202,11 @@ namespace ue
             logger.logDebug("Accept in SMS compose - sending message");
             selectedIndexOpt = std::nullopt;
         }
+        else if (currentViewMode == details::VIEW_MODE_UNKNOWN)
+        {
+            logger.logDebug("Accept in UNKNOWN view (likely alert) — forwarding to handler");
+            selectedIndexOpt = std::nullopt;
+        }
 
         logger.logDebug("Sending UI action to handler, mode: ", currentViewMode);
         handler->handleUiAction(selectedIndexOpt);
@@ -237,6 +242,11 @@ namespace ue
     void UserPort::clearOutgoingText()
     {
         gui.setCallMode().clearOutgoingText();
+    }
+
+    common::PhoneNumber UserPort::getDialedPhoneNumber() const
+    {
+        return gui.setDialMode().getPhoneNumber();
     }
 
 }
