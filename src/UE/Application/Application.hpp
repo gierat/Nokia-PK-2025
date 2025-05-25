@@ -37,6 +37,12 @@ namespace ue
         void handleSmsReceived(common::PhoneNumber from, std::string text) override;
         void handleSmsSentResult(common::PhoneNumber to, bool success) override;
         void handleSmsComposeResult(common::PhoneNumber recipient, const std::string& text) override;
+        void handleCallRequest(common::PhoneNumber from) override;
+        void handleCallDropped(common::PhoneNumber peer) override;
+        void handleCallAccept(common::PhoneNumber peer) override;
+        void handleUnknownRecipient(common::PhoneNumber peer) override;
+        void handleCallTalk(common::PhoneNumber from, const std::string &text) override;
+        void handleCallReject(common::PhoneNumber peer) override;
 
     private:
         Context context;
