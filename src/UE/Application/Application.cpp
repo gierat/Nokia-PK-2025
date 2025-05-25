@@ -12,7 +12,7 @@ namespace ue
                              IBtsPort &bts,
                              IUserPort &user,
                              ITimerPort &timer)
-        : context{iLogger, bts, user, timer, SmsRepository(), nullptr, phoneNumber},
+        : context{iLogger, bts, user, timer, nullptr, SmsRepository(), phoneNumber},
           logger(iLogger, "[APP] ")
     {
         logger.logInfo("Started with phone number: ", context.myPhoneNumber);
@@ -87,6 +87,66 @@ namespace ue
         context.bts.sendSms(recipient, text);
 
         context.setState<ConnectedState>();
+    }
+
+        void Application::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logDebug("Application handling CallRequest from: ", from);
+        if (context.state)
+            context.state->handleCallRequest(from);
+        else
+            logger.logError("No state object to handle CallRequest from: ", from);
+    }
+
+    void Application::handleCallDropped(common::PhoneNumber peer)
+    {
+        logger.logDebug("Application handling CallDropped from: ", peer);
+        if (context.state)
+        {
+            logger.logInfo("CallDropped received from: ", peer);
+            context.state->handleCallDropped(peer);
+        }
+        else
+        {
+            logger.logError("No state object to handle CallDropped from: ", peer);
+        }
+    }
+
+    void Application::handleCallAccept(common::PhoneNumber peer)
+    {
+        logger.logInfo("Handling CallAccept from: ", peer);
+        if (context.state)
+            context.state->handleCallAccept(peer);
+    }
+
+    void Application::handleCallReject(common::PhoneNumber peer)
+    {
+        logger.logInfo("Handling CallReject from: ", peer);
+        if (context.state)
+            context.state->handleCallReject(peer);
+    }
+
+    void Application::handleUnknownRecipient(common::PhoneNumber peer)
+    {
+        if (context.smsRepository.markLastOutgoingSmsAsFailed())
+        {
+            logger.logInfo("SMS failed to deliver (Unknown recipient): ", peer);
+            context.user.showAlert("SMS failed", "User not available");
+            context.user.showConnected();
+        }
+        else
+        {
+            logger.logInfo("Call failed (Unknown recipient): ", peer);
+            context.user.showAlert("Call failed", "User not connected");
+            context.setState<ConnectedState>();
+        }
+    }
+
+    void Application::handleCallTalk(common::PhoneNumber from, const std::string &text)
+    {
+        logger.logInfo("Received CallTalk from ", from);
+        if (context.state)
+            context.state->handleCallTalk(from, text);
     }
 
 }

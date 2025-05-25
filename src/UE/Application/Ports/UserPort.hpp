@@ -9,44 +9,49 @@
 #include "IEventsHandler.hpp"
 #include "UeGui/ISmsComposeMode.hpp"
 #include <optional>
-#include <vector>
-#include "SmsRepository.hpp"
 
 namespace ue
 {
 
-class UserPort : public IUserPort
-{
-public:
-    UserPort(common::ILogger& logger, IUeGui& gui, common::PhoneNumber phoneNumber);
-    void start(IEventsHandler& handler);
-    void stop();
+    class UserPort : public IUserPort
+    {
+    public:
+        UserPort(common::ILogger &logger, IUeGui &gui, common::PhoneNumber phoneNumber);
+        void start(IEventsHandler &handler);
+        void stop();
 
-    void showNotConnected() override;
-    void showConnecting() override;
-    void showConnected() override;
-    void showNewSms() override;
+        void showNotConnected() override;
+        void showConnecting() override;
+        void showConnected() override;
+        void showNewSms() override;
 
-    void showSmsList(const std::vector<SmsMessage>& messages);
-    void showSmsView(const SmsMessage& message);
-    void showAlert(const std::string& title, const std::string& message);
-    void showSmsCompose() override;
+        void showSmsList(const std::vector<SmsMessage> &messages);
+        void showSmsView(const SmsMessage &message);
+        void showAlert(const std::string &title, const std::string &message);
+        void showSmsCompose() override;
 
-    common::PhoneNumber getSmsRecipient() const override;
-    std::string getSmsText() const override;
+        void showIncomingCall(common::PhoneNumber from) override;
+        void showTalkingScreen(common::PhoneNumber peer) override;
+        void showDialMode();
 
-private:
-    void acceptCallback();
-    void rejectCallback();
-    void mailCallback();
+        common::PhoneNumber getSmsRecipient() const override;
+        std::string getSmsText() const override;
 
+        void appendIncomingText(const std::string &text) override;
+        void clearOutgoingText() override;
+        std::string getCallText() const override;
 
-    common::PrefixedLogger logger;
-    IUeGui& gui;
-    common::PhoneNumber phoneNumber;
-    IEventsHandler* handler = nullptr;
-    details::GuiViewMode currentViewMode = details::VIEW_MODE_UNKNOWN;
+    private:
+        void acceptCallback();
+        void rejectCallback();
+        void mailCallback();
 
-};
+        common::PrefixedLogger logger;
+        IUeGui &gui;
+        common::PhoneNumber phoneNumber;
+        IEventsHandler *handler = nullptr;
+        details::GuiViewMode currentViewMode = details::VIEW_MODE_UNKNOWN;
+        IUeGui::ISmsComposeMode* currentSmsMode = nullptr;
+    };
 
 }

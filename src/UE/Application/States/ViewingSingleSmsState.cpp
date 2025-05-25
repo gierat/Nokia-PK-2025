@@ -1,7 +1,6 @@
 #include "ViewingSingleSmsState.hpp"
 #include "ViewingSmsListState.hpp"
 #include "NotConnectedState.hpp"
-#include <stdexcept>
 
 namespace ue
 {
@@ -19,7 +18,7 @@ namespace ue
         }
 
         const SmsMessage &message = allSms[viewingSmsIndex];
-        logger.logInfo("Viewing SMS at index: ", viewingSmsIndex, ", From: "); //from message.peer
+        logger.logInfo("Viewing SMS at index: ", viewingSmsIndex, ", From: ", message.peer);
 
         if (message.direction == SmsMessage::Direction::INCOMING &&
             message.status == SmsMessage::Status::RECEIVED_UNREAD)
@@ -66,5 +65,4 @@ namespace ue
         logger.logDebug("SMS stored at index: ", smsIndex);
         context.user.showNewSms();
     }
-
 }

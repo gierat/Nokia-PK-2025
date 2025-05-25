@@ -28,7 +28,7 @@ namespace ue
             {
                 const auto &msg = currentSmsList[i];
                 bool isRead = (msg.direction == SmsMessage::Direction::INCOMING) ? (msg.status == SmsMessage::Status::RECEIVED_READ) : true;
-                logger.logDebug("SMS #", i, ": ",
+                logger.logDebug("SMS #", i, ": ", common::to_string(msg.peer),
                                 " - Read: ", isRead ? "Yes" : "No");
             }
 

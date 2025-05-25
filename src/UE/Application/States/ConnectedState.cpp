@@ -1,9 +1,14 @@
 #include "ConnectedState.hpp"
 #include "NotConnectedState.hpp"
 #include "ViewingSmsListState.hpp"
+#include "ComposingSmsState.hpp"
+#include "IncomingCallState.hpp"
+#include "CallingState.hpp"
+#include "UeGui/IListViewMode.hpp"
+#include "UeGui/ITextMode.hpp"
 #include <vector>
 
-#include "ComposingSmsState.hpp"
+
 
 namespace ue
 {
@@ -77,5 +82,10 @@ namespace ue
         }
     }
 
+    void ConnectedState::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logInfo("Handling incoming call request from: ", from);
+        context.setState<IncomingCallState>(from);
+    }
 
 }

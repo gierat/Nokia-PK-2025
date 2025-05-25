@@ -1,79 +1,68 @@
 #include "UserPort.hpp"
 #include "UeGui/IListViewMode.hpp"
 #include "UeGui/ITextMode.hpp"
+#include "UeGui/IDialMode.hpp"
+#include "UeGui/ICallMode.hpp"
 #include <string>
-#include "IEventsHandler.hpp"
 
-namespace ue {
+
+
+namespace ue
+{
+
     UserPort::UserPort(common::ILogger &logger, IUeGui &gui, common::PhoneNumber phoneNumber)
         : logger(logger, "[USER-PORT]"),
           gui(gui),
-          phoneNumber(phoneNumber) {
+          phoneNumber(phoneNumber)
+    {
     }
 
-    void UserPort::start(IEventsHandler &handler) {
+    void UserPort::start(IEventsHandler &handler)
+    {
         this->handler = &handler;
-        gui.setTitle("Nokia " + to_string(phoneNumber));
+        gui.setTitle("Nokia " + common::to_string(phoneNumber));
 
         gui.setAcceptCallback(std::bind(&UserPort::acceptCallback, this));
         gui.setRejectCallback(std::bind(&UserPort::rejectCallback, this));
-        gui.setMailCallback(std::bind(&UserPort::mailCallback, this));
     }
 
-    void UserPort::stop() {
+    void UserPort::stop()
+    {
         handler = nullptr;
+
         gui.setAcceptCallback(nullptr);
         gui.setRejectCallback(nullptr);
-        gui.setMailCallback(nullptr);
     }
 
-    void UserPort::showNotConnected() {
+    void UserPort::showNotConnected()
+    {
         currentViewMode = details::VIEW_MODE_UNKNOWN;
         gui.showNotConnected();
     }
 
-    void UserPort::showConnecting() {
+    void UserPort::showConnecting()
+    {
         currentViewMode = details::VIEW_MODE_UNKNOWN;
         gui.showConnecting();
     }
 
-    void UserPort::showConnected() {
+    void UserPort::showConnected()
+    {
         currentViewMode = details::VIEW_MODE_MAIN_MENU;
         logger.logInfo("Showing Main Menu");
         IUeGui::IListViewMode &menu = gui.setListViewMode();
         menu.clearSelectionList();
+
+        menu.addSelectionListItem("Compose SMS", "Send a new text message");
+        menu.addSelectionListItem("View SMS", "Read received messages");
+        menu.addSelectionListItem("Dial", "Dial a phone number");
+
         gui.showConnected();
     }
 
     void UserPort::mailCallback()
     {
-        if (!handler)
-            return;
-
-        logger.logDebug("Mail button pressed (SMS functionality)");
-
-        if (currentViewMode == details::VIEW_MODE_SMS_COMPOSE)
-        {
-            logger.logInfo("Mail button in compose mode - sending message");
-            auto recipient = getSmsRecipient();
-            auto text = getSmsText();
-
-            if (!recipient.isValid() || text.empty()) {
-                showAlert("Error", "Invalid recipient or empty text");
-                return;
-            }
-            handler->handleSmsComposeResult(recipient, text);
-
-            gui.getSmsComposeMode().clearSmsText();
-        }
-        else
-        {
-            currentViewMode = details::VIEW_MODE_SMS_MENU;
-            IUeGui::IListViewMode &menu = gui.setListViewMode();
-            menu.clearSelectionList();
-            menu.addSelectionListItem("Compose SMS", "Send a new text message");
-            menu.addSelectionListItem("View SMS", "Read received messages");
-        }
+        acceptCallback();
     }
 
     void UserPort::showNewSms()
@@ -97,7 +86,7 @@ namespace ue {
 
             std::string directionLabel = (sms.direction == SmsMessage::Direction::INCOMING) ? "From: " : "To: ";
 
-            std::string label = prefix + directionLabel; //sms.peer
+            std::string label = prefix + directionLabel + common::to_string(sms.peer);
 
             if (sms.direction == SmsMessage::Direction::OUTGOING && sms.status == SmsMessage::Status::FAILED)
             {
@@ -113,11 +102,11 @@ namespace ue {
         currentViewMode = details::VIEW_MODE_SMS_VIEW;
 
         std::string labelPrefix = (message.direction == SmsMessage::Direction::INCOMING) ? "From: " : "To: ";
-        logger.logInfo(labelPrefix); //message.peer
+        logger.logInfo(labelPrefix, message.peer);
 
         IUeGui::ITextMode &viewer = gui.setViewTextMode();
 
-        std::string displayText = labelPrefix; //message.peer
+        std::string displayText = labelPrefix + common::to_string(message.peer);
         displayText += "\n\n--- Treść wiadomości ---\n";
         displayText += message.text;
 
@@ -130,12 +119,12 @@ namespace ue {
         viewer.setText(displayText);
     }
 
-    void UserPort::showAlert(const std::string& title, const std::string& message)
+    void UserPort::showAlert(const std::string &title, const std::string &message)
     {
 
         currentViewMode = details::VIEW_MODE_UNKNOWN;
         logger.logInfo("Showing Alert: ", title);
-        IUeGui::ITextMode& alerter = gui.setAlertMode();
+        IUeGui::ITextMode &alerter = gui.setAlertMode();
         alerter.setText(title + "\n\n" + message);
     }
 
@@ -143,10 +132,31 @@ namespace ue {
     {
         currentViewMode = details::VIEW_MODE_SMS_COMPOSE;
         logger.logInfo("Showing SMS Compose screen");
-        auto& composeMode = gui.setSmsComposeMode();
+        currentSmsMode = &gui.setSmsComposeMode();
+        currentSmsMode->clearSmsText();
+    }
 
-        composeMode.clearSmsText();
-        composeMode.setPhoneNumber(common::PhoneNumber{});
+    void UserPort::showIncomingCall(common::PhoneNumber from)
+    {
+        currentViewMode = details::VIEW_MODE_UNKNOWN;
+        logger.logInfo("Showing incoming call screen from: ", from);
+        auto& callMode = gui.setCallMode();
+        callMode.appendIncomingText("Incoming call from: " + common::to_string(from));
+    }
+
+    void UserPort::showTalkingScreen(common::PhoneNumber peer)
+    {
+        currentViewMode = details::VIEW_MODE_UNKNOWN;
+        logger.logInfo("Showing talking screen with: ", peer);
+        auto& callMode = gui.setCallMode();
+        callMode.appendIncomingText("Connected with: " + common::to_string(peer));
+    }
+
+    void UserPort::showDialMode()
+    {
+        currentViewMode = details::VIEW_MODE_DIAL;
+        logger.logInfo("Going into dialing.");
+        gui.setDialMode();
     }
 
     void UserPort::acceptCallback()
@@ -170,7 +180,7 @@ namespace ue {
             auto indexPair = listView.getCurrentItemIndex();
             selectedIndexOpt = indexPair.first ? std::optional<std::size_t>(indexPair.second) : std::nullopt;
 
-            if (selectedIndexOpt.has_value())
+            if (selectedIndexOpt.has_value() && currentViewMode == details::VIEW_MODE_SMS_MENU)
             {
                 if (selectedIndexOpt.value() == 0)
                 {
@@ -196,10 +206,10 @@ namespace ue {
         logger.logDebug("Sending UI action to handler, mode: ", currentViewMode);
         handler->handleUiAction(selectedIndexOpt);
     }
-
     void UserPort::rejectCallback()
     {
-        if (!handler) return;
+        if (!handler)
+            return;
         logger.logDebug("UI Action (Reject/Back), Mode: ", currentViewMode);
 
         handler->handleUiBack();
@@ -207,12 +217,26 @@ namespace ue {
 
     common::PhoneNumber UserPort::getSmsRecipient() const
     {
-        return gui.getSmsComposeMode().getPhoneNumber();
+        return currentSmsMode ? currentSmsMode->getPhoneNumber() : common::PhoneNumber{};
     }
 
     std::string UserPort::getSmsText() const
     {
-        return gui.getSmsComposeMode().getSmsText();
+        return currentSmsMode ? currentSmsMode->getSmsText() : "";
+    }
+    std::string UserPort::getCallText() const
+    {
+        return gui.setCallMode().getOutgoingText();
+    }
+
+    void UserPort::appendIncomingText(const std::string &text)
+    {
+        gui.setCallMode().appendIncomingText(text);
+    }
+
+    void UserPort::clearOutgoingText()
+    {
+        gui.setCallMode().clearOutgoingText();
     }
 
 }
