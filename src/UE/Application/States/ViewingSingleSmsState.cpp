@@ -1,7 +1,8 @@
 #include "ViewingSingleSmsState.hpp"
 #include "ViewingSmsListState.hpp"
 #include "NotConnectedState.hpp"
-
+#include "IncomingCallState.hpp"
+#include <stdexcept>
 namespace ue
 {
 
@@ -65,4 +66,11 @@ namespace ue
         logger.logDebug("SMS stored at index: ", smsIndex);
         context.user.showNewSms();
     }
+
+    void ViewingSingleSmsState::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logInfo("Incoming call while reading SMS from: ", from);
+        context.setState<IncomingCallState>(from);
+    }
+
 }

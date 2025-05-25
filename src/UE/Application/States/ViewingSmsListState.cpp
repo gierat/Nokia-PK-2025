@@ -2,10 +2,11 @@
 #include "ViewingSingleSmsState.hpp"
 #include "ConnectedState.hpp"
 #include "NotConnectedState.hpp"
+#include "IncomingCallState.hpp"
 
 namespace ue
 {
-    ViewingSmsListState::ViewingSmsListState(Context& context)
+    ViewingSmsListState::ViewingSmsListState(Context &context)
         : BaseState(context, "ViewingSmsListState")
     {
         logger.logDebug("Entering SMS List view");
@@ -68,7 +69,6 @@ namespace ue
 
         logger.logDebug("Explicitly refreshing SMS list before exiting");
 
-        context.setState<ConnectedState>();
     }
 
     void ViewingSmsListState::handleDisconnected()
@@ -85,4 +85,11 @@ namespace ue
         context.user.showNewSms();
         showList();
     }
+
+    void ViewingSmsListState::handleCallRequest(common::PhoneNumber from)
+    {
+        logger.logInfo("Incoming call while viewing SMS list from: ", from);
+        context.setState<IncomingCallState>(from);
+    }
+
 }
