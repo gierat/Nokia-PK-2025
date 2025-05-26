@@ -63,6 +63,8 @@ namespace ue
         }
         else
         {
+            context.user.showConnected();
+            context.setState<ConnectedState>();
             logger.logError("Received CallEnd from unexpected peer ", peer, " while waiting for call from ", callingPhoneNumber);
         }
     }
