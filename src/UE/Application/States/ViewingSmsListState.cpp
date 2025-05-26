@@ -15,6 +15,9 @@ namespace ue
 
     void ViewingSmsListState::showList()
     {
+        // if (context.smsRepository.getUnreadCount() == 0) {
+        //     context.user.showNewSms(false);
+        // }
         currentSmsList = context.smsRepository.getAllSms();
         if (currentSmsList.empty())
         {
