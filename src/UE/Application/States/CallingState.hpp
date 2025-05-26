@@ -16,6 +16,7 @@ namespace ue
         void handleDisconnected() override;
         void handleTimeout() override;
         void handleUnknownRecipient(common::PhoneNumber peer) override;
+        void handleCallDropped(common::PhoneNumber peer) override;
         void handleCallReject(common::PhoneNumber peer) override;
         void handleSmsReceived(common::PhoneNumber from, std::string text) override;
         void handleCallRequest(common::PhoneNumber from) override;

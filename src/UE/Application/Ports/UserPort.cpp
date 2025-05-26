@@ -73,6 +73,7 @@ namespace ue
 
     void UserPort::showSmsList(const std::vector<SmsMessage> &messages)
     {
+        gui.showNewSms(false);
         currentViewMode = details::VIEW_MODE_SMS_LIST;
         logger.logInfo("Showing SMS List (Count: ", messages.size(), ")");
         IUeGui::IListViewMode &menu = gui.setListViewMode();

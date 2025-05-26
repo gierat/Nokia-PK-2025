@@ -57,6 +57,15 @@ namespace ue
         context.setState<TalkingState>(peer);
     }
 
+    void CallingState::handleCallDropped(common::PhoneNumber peer)
+    {
+        logger.logInfo("Call from ", peer, " was cancelled/dropped by the peer before accepting.");
+        context.timer.stopTimer();
+        context.user.showConnected();
+        context.setState<ConnectedState>();
+    }
+
+
     void CallingState::handleTimeout()
     {
         logger.logInfo("Call timed out");
